@@ -1,0 +1,18 @@
+Number_Of_Ion_Species                      1
+
+Number_Of_Cells                         1024
+Box_Length*omega_i/c                     512
+Time_Step/Omega_i                                0.02
+
+Magnetic_Field(G)                                3.000E-06
+Magnetic_Angle_Cosine                            0.1736
+Electron_Temperature(K)                          3.000E+04
+
+Type                                     043
+Particles_Per_Cell                      1000
+Number_Density(cm-3)                             1.000E-01
+Parameter1                                       0.000E+00
+Parameter2                                       2.227E+06
+Parameter3                                       0.000E+00
+Parameter4                                       2.227E+06
+
