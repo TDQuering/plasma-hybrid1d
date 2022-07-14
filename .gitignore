@@ -1,2 +1,8 @@
+# C++ Object Files
 *.o
+
+# Compiled Simulation Code
 hybrid_sim
+
+# VSCode IDE Files
+.vscode/

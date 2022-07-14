@@ -251,6 +251,9 @@ int main(int argc, char *argv[])
    double B0[4], b0[4], mu0;
    double de0, pe0, Te0, wpi = 0.0, wci, wpiwci, beta0, betae;
 
+// Computable values related to the magnetosonic wave and driving current
+   double v_a, c_s, v_f, l_physical, t_freq
+
 // Diagnostic
    double en_ion[max_species], pa_ion[max_species], pa2_ion[max_species];
    double en_field, en_elec,  en_tot, dB2B2, grid_mass, grid_momt[4], grid_enrg;
@@ -387,6 +390,13 @@ int main(int argc, char *argv[])
       wpiwci = wpi / wci;
       dt *= wpiwci;
       pe0 = betae / (2.0 * wpiwci * wpiwci);
+
+      // Computation required to add magnetosonic wave with driving current
+      v_a = B0[0] / sqrt(fourpi * de0 * p_mass); // Alfven speed (cm/s)
+      c_s = sqrt((gammaa * kboltz * Te0) / p_mass); // Ion sound speed (cm/s)
+      v_f = sqrt((Sqr(v_a) + Sqr(c_s) + sqrt(Sqr(Sqr(v_a) + Sqr(c_s)) - 4.0*Sqr(v_a)*Sqr(c_s)*mu0)) / 2.0); // Fast magnetosonic wave speed (cm/s)
+      l_physical = (splight / wpi) * xmax; // Full simulation length (cm)
+      t_freq = twopi / (l_physical / v_f); // Time-frequency of the driving current wave (Hz) to be multiplied by the time (s) when determining the driving current.
 
       cerr << "# " << Nspecies << " ion species\n";
       cerr << "# Plasma to cyclotrton frequency ratio is " << wpiwci << endl;
