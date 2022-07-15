@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
    double de0, pe0, Te0, wpi = 0.0, wci, wpiwci, beta0, betae;
 
 // Computable values related to the magnetosonic wave and driving current
-   double v_a, c_s, v_f, l_physical, t_freq
+   double v_a, c_s, v_f, l_physical, t_freq;
 
 // Diagnostic
    double en_ion[max_species], pa_ion[max_species], pa2_ion[max_species];

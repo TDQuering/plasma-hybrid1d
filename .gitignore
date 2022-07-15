@@ -6,3 +6,6 @@ hybrid_sim
 
 # VSCode IDE Files
 .vscode/
+
+# SLURM Job Management Files
+slurm_submit
