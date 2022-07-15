@@ -4,7 +4,7 @@ Number_Of_Cells                         1024
 Box_Length*omega_i/c                     512
 Time_Step/Omega_i                                0.02
 
-Magnetic_Field(G)                                3.000E-06
+Magnetic_Field(G)                                5.000E-06
 Magnetic_Angle_Cosine                            0.1736
 Electron_Temperature(K)                          3.000E+04
 
