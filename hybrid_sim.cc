@@ -47,6 +47,9 @@ const int tick = 1;
 // frequency of data dumps (2 per 1000 orbit run with dt=0.02)
 const int save = 110000;
 
+// frequency of intermediate field and moment printing
+const int ptick = 3140;
+
 // multipliers for the PDF cube
 const int ringResMultiplier = 35;
 const int coreResMultiplier = 4;
@@ -58,6 +61,9 @@ const string fields_fname = "fields.out";
 const string fields_pname = "fields.dat";
 const string moments_pname = "moments.dat";
 const string spacetime_pname = "spacetime.dat";
+
+// Variable base filename for intermediate field & moment printing
+string moments_iname, fields_iname;
 
 
 //------------------------------------------------------------------------------
@@ -253,6 +259,8 @@ int main(int argc, char *argv[])
 
 // Computable values related to the magnetosonic wave and driving current
    double v_a, c_s, v_f, l_physical, t_freq;
+// Defined parameters related to the magnetosonic wave and driving current
+   double j_amplitude, wave_timelength;
 
 // Diagnostic
    double en_ion[max_species], pa_ion[max_species], pa2_ion[max_species];
@@ -359,6 +367,10 @@ int main(int argc, char *argv[])
       parmfile >> temps1 >> B0[0];
       parmfile >> temps1 >> mu0;
       parmfile >> temps1 >> Te0;
+
+// Driving current properties
+      parmfile >> temps1 >> j_amplitude;
+      parmfile >> temps1 >> wave_timelength;
       
 // Individual distribution properties
       de0 = 0.0;
@@ -391,15 +403,8 @@ int main(int argc, char *argv[])
       dt *= wpiwci;
       pe0 = betae / (2.0 * wpiwci * wpiwci);
 
-      // Computation required to add magnetosonic wave with driving current
-      v_a = B0[0] / sqrt(fourpi * de0 * p_mass); // Alfven speed (cm/s)
-      c_s = sqrt((gammaa * kboltz * Te0) / p_mass); // Ion sound speed (cm/s)
-      v_f = sqrt((Sqr(v_a) + Sqr(c_s) + sqrt(Sqr(Sqr(v_a) + Sqr(c_s)) - 4.0*Sqr(v_a)*Sqr(c_s)*mu0)) / 2.0); // Fast magnetosonic wave speed (cm/s)
-      l_physical = (splight / wpi) * xmax; // Full simulation length (cm)
-      t_freq = twopi / (l_physical / v_f); // Time-frequency of the driving current wave (Hz) to be multiplied by the time (s) when determining the driving current.
-
       cerr << "# " << Nspecies << " ion species\n";
-      cerr << "# Plasma to cyclotrton frequency ratio is " << wpiwci << endl;
+      cerr << "# Plasma to cyclotron frequency ratio is " << wpiwci << endl;
       cerr << "# Core ion beta is " << beta0 << endl;
       cerr << "# Inertial length is " << splight / wpi << " cm\n";
 
@@ -407,6 +412,13 @@ int main(int argc, char *argv[])
       B0[1] = mu0 / wpiwci;
       B0[2] = sqrt(1.0 - Sqr(mu0)) / wpiwci;
       B0[3] = 0.0;
+
+// Computation required to add magnetosonic wave with driving current
+      v_a = B0[0] / sqrt(fourpi * de0 * p_mass); // Alfven speed (cm/s)
+      c_s = sqrt((gammaa * kboltz * Te0) / p_mass); // Ion sound speed (cm/s)
+      v_f = sqrt((Sqr(v_a) + Sqr(c_s) + sqrt(Sqr(Sqr(v_a) + Sqr(c_s)) - 4.0*Sqr(v_a)*Sqr(c_s)*mu0)) / 2.0); // Fast magnetosonic wave speed (cm/s)
+      l_physical = (splight / wpi) * xmax; // Full simulation length (cm)
+      t_freq = (twopi / (l_physical / v_f)) / wpi; // Dimensionless time-frequency of the driving current (to multiply by simtime)
 
 // Unit vector along B0
       Copy(B0, b0);
@@ -537,6 +549,9 @@ int main(int argc, char *argv[])
       if(is_master) {
          moments.Filter(0.5);
          fields.AdvanceImplicit(moments, dt);
+         if((simtime / wpiwci) / twopi < wave_timelength) { // Apply the driving current if the simulation has not yet reached the switch-off time.
+            fields.ApplyDrivingCurrent(simtime, t_freq, j_amplitude);
+         };
          moments_fs.Filter(0.5);
          fields.AdvanceElectric(moments_fs, dt / 2.0);
       };
@@ -619,6 +634,14 @@ int main(int argc, char *argv[])
       
 // Save the data throughout the run
       if(!(t % save) && t) SaveAll(Nspecies, fields, particles, simtime);
+
+// Print intermediate field & moment data
+      if(!(t % ptick) && t && is_master) {
+         moments_iname = "moments_intermediate_" + to_string(t) + ".dat";
+         fields_iname = "fields_intermediate_" + to_string(t) +  ".dat"; 
+         moments.Print(1.0, moments_iname);
+         fields.Print(1.0, fields_iname);
+      };
 
       t++;
       simtime += dt;

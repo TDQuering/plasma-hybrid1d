@@ -73,6 +73,9 @@ public:
 // Advance magnetic field using an implicit method
    void AdvanceImplicit(moments_t &moments, double dt);
 
+// Apply the driving current to produce the magnetosonic wave
+   void ApplyDrivingCurrent(double t, double omega_t, double j_amp);
+
 // Compute the electric field using Ohm's law and momentum advance
    void AdvanceElectric(moments_t &moments, double dt);
 

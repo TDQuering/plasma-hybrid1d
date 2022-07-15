@@ -265,6 +265,23 @@ void fields_t::AdvanceImplicit(moments_t &moments, double dt)
 
 
 //------------------------------------------------------------------------------
+// Apply the driving current to produce the magnetosonic wave
+//------------------------------------------------------------------------------
+// Input  | t        | current simulation time
+// Input  | omega_t  | time-frequency for the wave
+// Input  | j_amp    | amplitude of the wave
+//------------------------------------------------------------------------------
+
+void fields_t::ApplyDrivingCurrent(double t, double omega_t, double j_amp)
+{
+   double xval;
+   for(int i = 2; i <= Imax; i++) {
+      xval = (i - 1.5) * dx;
+      j[i][2] += j_amp * sin((twopi / xmax)*xval - t*omega_t);
+   };
+};
+
+//------------------------------------------------------------------------------
 // Compute the electric field using Ohm's law and momentum advance
 //------------------------------------------------------------------------------
 // Input  | moments  | particle moments
@@ -273,6 +290,7 @@ void fields_t::AdvanceImplicit(moments_t &moments, double dt)
 
 void fields_t::AdvanceElectric(moments_t &moments, double dt)
 {
+
    int i, xyz;
    double mom[4], uB[4], jB[4], twodx;
 
