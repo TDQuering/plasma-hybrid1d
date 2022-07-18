@@ -274,10 +274,11 @@ void fields_t::AdvanceImplicit(moments_t &moments, double dt)
 
 void fields_t::ApplyDrivingCurrent(double t, double omega_t, double j_amp)
 {
-   double xval;
-   for(int i = 2; i <= Imax; i++) {
+   double xval, k0;
+   k0 = twopi / xmax;
+   for(int i = 2; i <= Imax - 1; i++) {
       xval = (i - 1.5) * dx;
-      j[i][2] += j_amp * sin((twopi / xmax)*xval - t*omega_t);
+      j[i][3] += j_amp * sin((k0*xval) - (t*omega_t));
    };
 };
 

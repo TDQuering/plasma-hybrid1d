@@ -8,8 +8,8 @@ Magnetic_Field(G)                                5.000E-06
 Magnetic_Angle_Cosine                            0.1736
 Electron_Temperature(K)                          3.000E+04
 
-Driving_Current_Amplitude                        5.000E-6
-Driving_Current_TimeLength(Gyroperiods)          1.000E+1
+Driving_Current_Amplitude                        2.000E-6
+Driving_Current_TimeLength(Gyroperiods)          5.000E+0
 
 Type                                     043
 Particles_Per_Cell                      1000
