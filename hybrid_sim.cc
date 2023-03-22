@@ -48,7 +48,7 @@ const int tick = 1;
 const int save = 110000;
 
 // frequency of intermediate field and moment printing
-const int ptick = 3140;
+const int ptick = 314; // 314 for once per gyroperiod
 
 // multipliers for the PDF cube
 const int ringResMultiplier = 35;

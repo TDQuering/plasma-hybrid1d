@@ -406,7 +406,7 @@ void particles_t::PushX(double dt)
 // If the coordinate is still outside the box means particle traveled more than
 // the box length in one step, which is clearly an error.
       if(rvw[l][1] < 0.0 || rvw[l][1] >= xmax) {
-         cerr << "# Particle move error!\n";
+         cerr << "# Particle move error! x=" << rvw[l][1] << ", vx = " << rvw[l][4] << endl;
       };
    };
 };

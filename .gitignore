@@ -12,3 +12,6 @@ slurm_submit
 
 # Data from previously run simulations / tests
 dat/
+
+# Output cleanup batch file
+output_rm
