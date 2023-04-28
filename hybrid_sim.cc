@@ -49,7 +49,7 @@ const int tick = 40;
 const int save = 110000;
 
 // frequency of intermediate field and moment printing
-const int ptick = 314; // 314 for once per gyroperiod
+const int ptick = 3140; // 314 for once per gyroperiod
 
 // multipliers for the PDF cube
 const int ringResMultiplier = 35;
@@ -573,16 +573,20 @@ int main(int argc, char *argv[])
 // Fields will follow the "forced" wave for the specified # of gyroperiods and then return to 
 // regular field calculation. - TDQ 31 March 2023
 
+// NEW Attempt: Retrying the driving current approach with the newly corrected value of omega
+// If this works, some cleanup of extraneous variables like t_freq will be in order
+// ~TDQ 28 April 2023
+
       if(is_master) {
-         if((simtime / wpiwci) / twopi < wave_timelength) {
-            fields.AdvanceDecoupled(simtime, wave_omega, wave_amplitude, Fluct_E, B0, mu0);
-         } else {
-            moments.Filter(0.5);
-            fields.AdvanceImplicit(moments, dt);
-            moments_fs.Filter(0.5);
-            fields.AdvanceElectric(moments_fs, dt / 2.0);
-         }
+         moments.Filter(0.5);
+         fields.AdvanceImplicit(moments, dt);
+         if((simtime / wpiwci) / twopi < wave_timelength) { // Apply the driving current if the simulation has not yet reached the switch-off time.
+            fields.ApplyDrivingCurrent(simtime, wave_omega, j_amplitude);
+         };
+         moments_fs.Filter(0.5);
+         fields.AdvanceElectric(moments_fs, dt / 2.0);
       };
+
 
 
       if(is_master) {

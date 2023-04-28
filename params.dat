@@ -8,8 +8,8 @@ Magnetic_Field(G)                                5.000E-06
 Magnetic_Angle_Cosine                            0.1736
 Electron_Temperature(K)                          1.000E+04
 
-Driving_Current_Amplitude                        0
-Forced_Fields_TimeLength(Gyroperiods)            0.5
+Driving_Current_Amplitude                        1.0e-6
+Wave_Driving_TimeLength(Gyroperiods)             2.0
 
 Fluctuating_Eigenvector_X_Real                   3.1616E-1
 Fluctuating_Eigenvector_X_Imag                   0.0000E+0
@@ -21,7 +21,7 @@ Fluctuation_Amplitude                            0.01
 Fluctuation_Frequency(s^-1)                      7.6622E-4
 
 Type                                     043
-Particles_Per_Cell                      10240
+Particles_Per_Cell                      10240   
 Number_Density(cm-3)                             1.000E-01
 Parameter1                                       0.000E+00
 Parameter2                                       2.227E+06
