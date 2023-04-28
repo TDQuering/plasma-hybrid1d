@@ -15,6 +15,7 @@
 #include "geo_coord.hh"
 #include "block_thomas.hh"
 #include "hybrid_fields.hh"
+#include <complex>
 
 using namespace std;
 
@@ -280,6 +281,174 @@ void fields_t::ApplyDrivingCurrent(double t, double omega_t, double j_amp)
       xval = (i - 1.5) * dx;
       j[i][3] += j_amp * sin((k0*xval) - (t*omega_t));
    };
+};
+
+//------------------------------------------------------------------------------
+// Update the field according to the wave when decoupled
+//------------------------------------------------------------------------------
+// Input  | t           | current simulation time
+// Input  | wave_omega  | time-frequency of the wave (dimensionless)
+// Input  | wave_amp    | amplitude of the wave (percentage of B0)
+// Input  | Fluct_E     | Array containing the fluctuating electric field eigenvector
+// Input  | B0          | The background magnetic field
+// Input  | mu0         | cosine of the angle between the magnetic field and the wave
+//------------------------------------------------------------------------------
+
+// Old way of computing decoupled fields
+// Commenting out for now, hopefully new way gets good results. ~TDQ 5 April 2023
+
+/*
+void fields_t::AdvanceDecoupled(double t, double wave_omega, double wave_amp, std::complex<double> Fluct_E[4], double B0[4], double mu0) {
+   double xval, b_norm, E_prime[4], B_prime[4], sintheta;
+   double wave_k = twopi / xmax;
+   std::complex<double> Fluct_B[4], exp_factor, k_vect[4]; // Note k_vect should be real - it's stored as complex so that we can pass it to VectorProductComplex
+   std::complex<double> I = {0.0, 1.0};
+
+   // Since wave_amp is given as a percentage of B0.
+   wave_amp = wave_amp * Norm(B0);
+
+   // Currently we are working in a coordinate system where the +z axis is aligned with B0,
+   // so we must change the direction of k accordingly.
+   sintheta = sqrt(1.0 - Sqr(mu0));
+   k_vect[1] = {wave_k * sintheta, 0.0};
+   k_vect[2] = {0.0, 0.0};
+   k_vect[3] = {wave_k * mu0, 0.0};
+
+   // Initially stores B as k ⨯ E
+   VectorProductComplex(k_vect, Fluct_E, Fluct_B);
+
+   // Multiplies by c/omega
+   // wave_omega expected in code units, so we use c = 1 (double-check the units here)
+   for(int ndx = 1; ndx <= 3; ndx++) {
+      Fluct_B[ndx] = (1/wave_omega) * Fluct_B[ndx];
+   }
+
+   b_norm = NormComplex(Fluct_B);
+
+   // Normalizes B to the given amplitude and rescales E accordingly.
+   for(int ndx = 1; ndx <= 3; ndx++) {
+      Fluct_B[ndx] = (wave_amp / b_norm) * Fluct_B[ndx];
+      Fluct_E[ndx] = (wave_amp / b_norm) * Fluct_E[ndx];
+   }
+
+   for(int i = 2; i <= Imax - 1; i++) {
+      xval = (i - 1.5) * dx;
+      exp_factor = exp(I * (wave_k * xval - wave_omega * t));
+      for(int ndx = 1; ndx <= 3; ndx++) {
+         E_prime[ndx] = real(Fluct_E[ndx] * exp_factor);
+         B_prime[ndx] = real(Fluct_B[ndx] * exp_factor);
+      }
+
+      // Coordinates are currently labeled as "prime" since they are in a coordinate system
+      // in which the +z axis follows B0, but our code has B0 lying at an angle in the xy plane.
+      // This is handled while saving values to the final arrays here.
+      E[i][1] = E_prime[1]*sintheta + E_prime[3]*mu0;
+      E[i][2] = E_prime[1]*-1.0*mu0 + E_prime[3]*sintheta;
+      E[i][3] = E_prime[2];
+      B[i][1] = B_prime[1]*sintheta + E_prime[3]*mu0 + B0[1];
+      B[i][2] = B_prime[1]*-1.0*mu0 + B_prime[3]*sintheta + B0[2];
+      B[i][3] = B_prime[2] + B0[3];
+   };
+
+   // Assigns the proper values to the ghost cells for both B and E
+   B[1][1] = B[Imax - 1][1];
+   B[1][2] = B[Imax - 1][2];
+   B[1][3] = B[Imax - 1][3];
+   E[1][1] = E[Imax - 1][1];
+   E[1][2] = E[Imax - 1][2];
+   E[1][3] = E[Imax - 1][3];
+      
+   B[Imax][1] = B[2][1];
+   B[Imax][2] = B[2][2];
+   B[Imax][3] = B[2][3];
+   E[Imax][1] = E[2][1];
+   E[Imax][2] = E[2][2];
+   E[Imax][3] = E[2][3];
+};
+*/
+
+void fields_t::AdvanceDecoupled(double t, double wave_omega, double wave_amp, std::complex<double> Fluct_E[4], double B0[4], double mu0) {
+   double wave_k = twopi/xmax;
+   double xval, b_norm, E_prime[4], wave_E[4], wave_B[4], k_vect[4];
+   std::complex<double> exp_factor, k_complex[4], Fluct_B[4]; // As before, k_complex only exists for the VectorProductComplex function.
+   std::complex<double> I = {0.0, 1.0};
+   double sintheta = sqrt(1 - Sqr(mu0));
+
+   wave_amp *= Norm(B0);
+
+   // Plan of attack: Start by computing & rescaling fluctuating B as before.
+   // We only do this to correctly rescale fluctuating E, which will then be 
+   // used to compute B after finding the actual vector.
+
+   k_complex[1] = {wave_k * sintheta, 0.0};
+   k_complex[2] = {0.0, 0.0};
+   k_complex[3] = {wave_k * mu0, 0.0};
+
+   // First find Fluct_B as k ⨯ E
+   VectorProductComplex(k_complex, Fluct_E, Fluct_B);
+
+   // Multiply by c/omega, using c=1 since wave_omega should be in code units
+   // Make sure to re-check units in post; E should be smaller than B by a factor of ~v_a/c
+   for(int ndx = 1; ndx <= 3; ndx++) {
+      Fluct_B[ndx] = Fluct_B[ndx] * (1/wave_omega);
+   }
+
+   // Normalize Fluct_E to the correct amplitude
+   b_norm = NormComplex(Fluct_B);
+   for (int ndx = 1; ndx <= 3; ndx++) {
+      Fluct_B[ndx] = Fluct_B[ndx] * (wave_amp / b_norm);
+      Fluct_E[ndx] = Fluct_E[ndx] * (wave_amp / b_norm);
+   }
+
+   // This k vector is typed as real and stored in PIC units.
+   k_vect[1] = wave_k;
+   k_vect[2] = 0.0;
+   k_vect[3] = 0.0;
+
+   for(int i = 1; i <= Imax - 1; i++) {
+      xval = (i - 1.5) * dx;
+      exp_factor = exp(I * (wave_k*xval - wave_omega*t));
+
+      // Compute E_prime (needs coordinate transform)
+      for(int ndx = 1; ndx <= 3; ndx++) {
+         E_prime[ndx] = real(Fluct_E[ndx] * exp_factor);
+      };
+
+      // Convert to the correct coordinate system
+      wave_E[1] = E_prime[1]*sintheta + E_prime[3]*mu0;
+      wave_E[2] = E_prime[1]*-1.0*mu0 + E_prime[3]*sintheta;
+      wave_E[3] = E_prime[2];
+
+      // Now, compute B = c/omega * (k ⨯ E)
+      // Still using c = 1 (code units)
+      VectorProduct(k_vect, wave_E, wave_B);
+      for(int ndx = 1; ndx <= 3; ndx++) {
+         wave_B[ndx] = wave_B[ndx] * (1/wave_omega);
+      };
+
+      // Save values to the actual E and B arrays
+      E[i][1] = wave_E[1];
+      E[i][2] = wave_E[2];
+      E[i][3] = wave_E[3];
+      B[i][1] = wave_B[1] + B0[1];
+      B[i][2] = wave_B[2] + B0[2];
+      B[i][3] = wave_B[3] + B0[3];
+   };
+
+   // Assigns the proper values to the ghost cells for both B and E
+   B[1][1] = B[Imax - 1][1];
+   B[1][2] = B[Imax - 1][2];
+   B[1][3] = B[Imax - 1][3];
+   E[1][1] = E[Imax - 1][1];
+   E[1][2] = E[Imax - 1][2];
+   E[1][3] = E[Imax - 1][3];
+      
+   B[Imax][1] = B[2][1];
+   B[Imax][2] = B[2][2];
+   B[Imax][3] = B[2][3];
+   E[Imax][1] = E[2][1];
+   E[Imax][2] = E[2][2];
+   E[Imax][3] = E[2][3];
 };
 
 //------------------------------------------------------------------------------

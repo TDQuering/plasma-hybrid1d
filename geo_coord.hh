@@ -12,6 +12,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <complex>
 
 using namespace std;
 
@@ -129,6 +130,9 @@ inline void Copy(const double *v1, double *v2) {memcpy(&v2[1], &v1[1], 3 * sizeo
 // Compute the norm of a vector
 double Norm(const double *v);
 
+// Compute the norm of a complex vector
+double NormComplex(const std::complex<double> *v);
+
 // Compute the square of the norm
 double Norm2(const double *v);
 
@@ -143,6 +147,9 @@ double ScalarProduct(const double *v1, const double *v2);
 
 // Compute a vector product
 void VectorProduct(const double *v1, const double *v2, double *v3);
+
+// Compute a vector product of complex vectors
+void VectorProductComplex(const std::complex<double> *v1, const std::complex<double> *v2, std::complex<double> *v3);
 
 // Compute a triple product
 double TripleProduct(const double *v1, const double *v2, const double *v3);

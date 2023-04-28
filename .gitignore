@@ -4,6 +4,10 @@
 # Compiled Simulation Code
 hybrid_sim
 
+# Compiled standalone programs
+weighted_dist
+hybrid_fourier
+
 # VSCode IDE Files
 .vscode/
 
@@ -15,3 +19,13 @@ dat/
 
 # Output cleanup batch file
 output_rm
+
+# Output files
+*.dat
+*.out
+*.bov
+RunPDFVis.py
+
+# Active workspace
+working.png
+

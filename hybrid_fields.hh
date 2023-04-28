@@ -11,6 +11,7 @@
 #define HYBRID_FIELDS
 
 #include "hybrid_moments.hh"
+#include <complex>
 
 
 // adiabatic index
@@ -75,6 +76,9 @@ public:
 
 // Apply the driving current to produce the magnetosonic wave
    void ApplyDrivingCurrent(double t, double omega_t, double j_amp);
+
+// Advance the fields according to a wave, decoupled from the moments
+   void fields_t::AdvanceDecoupled(double t, double wave_omega, double wave_amp, std::complex<double> Fluct_E[4], double B0[4], double mu0);
 
 // Compute the electric field using Ohm's law and momentum advance
    void AdvanceElectric(moments_t &moments, double dt);

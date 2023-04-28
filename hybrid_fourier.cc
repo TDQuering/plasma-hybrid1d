@@ -14,9 +14,14 @@ const int Nx = 1024;
 const double dx = xmax / Nx;
 
 //const int Nt = 157; // 20 0 20
-const int Nt = 785; // 200 100 200
+const int Nt = 157; // 200 100 200
 const double dt = 0.02 * 40;
 
+double fftw_abs(fftw_complex z) {
+   return sqrt(z[0]*z[0] + z[1]*z[1]);
+};
+
+// NOTE TO TUCKER: Compile using g++ -o hybrid_fourier hybrid_fourier.cc -lfftw3
 
 int main(void)
 {
@@ -70,7 +75,7 @@ int main(void)
    fftw_destroy_plan(p1);
 
    for(i = 0; i < Nt / 2; i++) {
-      cout << i * 2.0 * M_PI / (Nt * dt) << " " << cabs(spect[i]) << endl;
+      cout << i * 2.0 * M_PI / (Nt * dt) << " " << fftw_abs(spect[i]) << endl;
    };
 
 
@@ -91,7 +96,7 @@ int main(void)
 // cut off the large k part since this is strongly affected by the grid
       for(j = 0; j < Nx / 4; j++) {
          k = i * (Nx / 2 + 1) + j;
-         absv = cabs(wavefreq[k]);
+         absv = fftw_abs(wavefreq[k]);
          wf_file.write((char *)&absv, sizeof(double));
       };
    };

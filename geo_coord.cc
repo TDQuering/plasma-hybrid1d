@@ -9,6 +9,7 @@
 
 #include "geo_memory.hh"
 #include "geo_coord.hh"
+#include <complex>
 
 using namespace std;
 
@@ -541,6 +542,17 @@ double Norm(const double *v)
    return sqrt(fmax(Sqr(v[1]) + Sqr(v[2]) + Sqr(v[3]), 0.0));
 };
 
+//------------------------------------------------------------------------------
+// Compute the norm of a complex-valued vector
+// Input:  v[] - input vector
+// Return: norm of v[]
+//------------------------------------------------------------------------------
+
+double NormComplex(const std::complex<double> *v)
+{ 
+   std::complex<double> norm = v[1]*std::conj(v[1]) + v[2]*std::conj(v[2]) + v[3]*std::conj(v[3]);
+   return sqrt(fmax(norm.real(), 0.0));
+};
 
 //------------------------------------------------------------------------------
 // Compute the square of the norm
@@ -611,6 +623,21 @@ void VectorProduct(const double *v1, const double *v2, double *v3)
    v3[3] = v1[1] * v2[2] - v1[2] * v2[1];
 };
 
+
+//------------------------------------------------------------------------------
+// Compute a vector product of two complex vectors
+// This is the same as the usual cross product but each component is conjugated.
+// Input:  v1[] - first vector
+// Input:  v2[] - second vector
+// Output: v3[] - vector product 𝐯₁ ⨯ 𝐯₂
+//------------------------------------------------------------------------------
+
+void VectorProductComplex(const std::complex<double> *v1, const std::complex<double> *v2, std::complex<double> *v3) 
+{
+   v3[1] = std::conj(v1[2] * v2[3] - v1[3] * v2[2]);
+   v3[2] = std::conj(v1[3] * v2[1] - v1[1] * v2[3]);
+   v3[3] = std::conj(v1[1] * v2[2] - v1[2] * v2[1]);
+};
 
 //------------------------------------------------------------------------------
 // Compute a triple product

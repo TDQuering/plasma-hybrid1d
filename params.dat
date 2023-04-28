@@ -6,13 +6,22 @@ Time_Step/Omega_i                                0.02
 
 Magnetic_Field(G)                                5.000E-06
 Magnetic_Angle_Cosine                            0.1736
-Electron_Temperature(K)                          3.000E+04
+Electron_Temperature(K)                          1.000E+04
 
 Driving_Current_Amplitude                        0
-Driving_Current_TimeLength(Gyroperiods)          0
+Forced_Fields_TimeLength(Gyroperiods)            0.5
+
+Fluctuating_Eigenvector_X_Real                   3.1616E-1
+Fluctuating_Eigenvector_X_Imag                   0.0000E+0
+Fluctuating_Eigenvector_Y_Real                  -9.4867E-1
+Fluctuating_Eigenvector_Y_Imag                   2.4201E+1
+Fluctuating_Eigenvector_Z_Real                   8.2592E-3
+Fluctuating_Eigenvector_Z_Imag                   5.2647E-4
+Fluctuation_Amplitude                            0.01
+Fluctuation_Frequency(s^-1)                      7.6622E-4
 
 Type                                     043
-Particles_Per_Cell                      10000
+Particles_Per_Cell                      10240
 Number_Density(cm-3)                             1.000E-01
 Parameter1                                       0.000E+00
 Parameter2                                       2.227E+06

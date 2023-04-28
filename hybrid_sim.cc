@@ -21,6 +21,7 @@
 #include "hybrid_fields.hh"
 #include "hybrid_moments.hh"
 #include "hybrid_particles.hh"
+#include <complex>
 
 #define is_boss !(rank % cores_per_node)
 
@@ -42,7 +43,7 @@ const double one_ev  = 1.60218E-12;  // 1 eV (erg)
 const int max_species = 10;
 
 // frequency of run time info dumps: use 40 for Fourier analysis
-const int tick = 1;
+const int tick = 40;
 
 // frequency of data dumps (2 per 1000 orbit run with dt=0.02)
 const int save = 110000;
@@ -262,6 +263,10 @@ int main(int argc, char *argv[])
 // Defined parameters related to the magnetosonic wave and driving current
    double j_amplitude, wave_timelength;
 
+// Defined parameters for the wave fluctuations
+   std::complex<double> Fluct_E[4]; // Fourier-transformed fluctuating E-field, in a coordinate system with +z following B
+   double wave_amplitude, wave_omega;
+
 // Diagnostic
    double en_ion[max_species], pa_ion[max_species], pa2_ion[max_species];
    double en_field, en_elec,  en_tot, dB2B2, grid_mass, grid_momt[4], grid_enrg;
@@ -354,7 +359,8 @@ int main(int argc, char *argv[])
 // file consist of a string - value pair.
    if(is_master) {
 
-      string temps1;
+      string temps1; 
+      double temp_real, temp_imag; // For reading complex numbers from the parameter file
       parmfile.open(params_dat.c_str(), ifstream::in);
 
 // Grid properties
@@ -371,6 +377,19 @@ int main(int argc, char *argv[])
 // Driving current properties
       parmfile >> temps1 >> j_amplitude;
       parmfile >> temps1 >> wave_timelength;
+
+// Actual fluctuating wave properties
+      parmfile >> temps1 >> temp_real;
+      parmfile >> temps1 >> temp_imag;
+      Fluct_E[1] = {temp_real, temp_imag};
+      parmfile >> temps1 >> temp_real;
+      parmfile >> temps1 >> temp_imag;
+      Fluct_E[2] = {temp_real, temp_imag};      
+      parmfile >> temps1 >> temp_real;
+      parmfile >> temps1 >> temp_imag;
+      Fluct_E[3] = {temp_real, temp_imag};
+      parmfile >> temps1 >> wave_amplitude;
+      parmfile >> temps1 >> wave_omega;
       
 // Individual distribution properties
       de0 = 0.0;
@@ -419,6 +438,9 @@ int main(int argc, char *argv[])
       v_f = sqrt((Sqr(v_a) + Sqr(c_s) + sqrt(Sqr(Sqr(v_a) + Sqr(c_s)) - 4.0*Sqr(v_a)*Sqr(c_s)*mu0)) / 2.0); // Fast magnetosonic wave speed (cm/s)
       l_physical = (splight / wpi) * xmax; // Full simulation length (cm)
       t_freq = (twopi / (l_physical / v_f)) / wpi; // Dimensionless time-frequency of the driving current (to multiply by simtime)
+
+// Divide wave_omega by wpi to make units compatible with simtime - I think this is correct at least.
+      wave_omega = wave_omega / wpi;
 
 // Unit vector along B0
       Copy(B0, b0);
@@ -546,15 +568,27 @@ int main(int argc, char *argv[])
       };
 
 // Advance the fields using filtered moments
+
+// Driving current approach now completely disabled 
+// Fields will follow the "forced" wave for the specified # of gyroperiods and then return to 
+// regular field calculation. - TDQ 31 March 2023
+
       if(is_master) {
-         moments.Filter(0.5);
-         fields.AdvanceImplicit(moments, dt);
-         if((simtime / wpiwci) / twopi < wave_timelength) { // Apply the driving current if the simulation has not yet reached the switch-off time.
-            fields.ApplyDrivingCurrent(simtime, t_freq, j_amplitude);
-         };
-         moments_fs.Filter(0.5);
-         fields.AdvanceElectric(moments_fs, dt / 2.0);
+         if((simtime / wpiwci) / twopi < wave_timelength) {
+            fields.AdvanceDecoupled(simtime, wave_omega, wave_amplitude, Fluct_E, B0, mu0);
+         } else {
+            moments.Filter(0.5);
+            fields.AdvanceImplicit(moments, dt);
+            moments_fs.Filter(0.5);
+            fields.AdvanceElectric(moments_fs, dt / 2.0);
+         }
       };
+
+
+      if(is_master) {
+         if((simtime / wpiwci) / twopi < wave_timelength) {
+         }
+      }
 
 // Broadcast the fields to the bosses and then workers
       if(Ncores != 1) {

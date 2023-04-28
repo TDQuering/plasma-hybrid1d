@@ -221,7 +221,18 @@ int main(int argc, char *argv[]) {
 
     params_file >> temps1 >> temps2; // discard driving current data + distribution type
     params_file >> temps1 >> temps2;
+
+    params_file >> temps1 >> temps2; // discard wave setup data
     params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+    params_file >> temps1 >> temps2;
+
+
+    params_file >> temps1 >> temps2; // discard distribution type
 
     params_file >> temps1 >> ppc;
     params_file >> temps1 >> density;
